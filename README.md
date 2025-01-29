@@ -9,6 +9,71 @@ Immediate mode UI library for Retro Gadgets
 local ui = require("ui.lua")
 ```
 
+## Example script
+![image](https://github.com/user-attachments/assets/d8be53f4-24ad-4491-bf4e-8820d29760ce)
+
+```luau
+local ui = require("ui.lua") -- Import the library
+
+-- Define some shortcuts
+local video = gdt.VideoChip0
+local cpu = gdt.CPU0
+
+local font = gdt.ROM.System.SpriteSheets["StandardFont"]
+local theme = ui.whiteOnBlack(font)
+
+-- Get text and button styles
+local normalText = ui.label(theme)
+local normalButton = ui.button(theme)
+
+-- Create state for a list
+local listState = ui.listState(
+	ui.VERTICAL,
+	ui.START,
+	1
+)
+
+-- Generate a bunch of buttons
+local buttons = {}
+for i = 1, 40 do
+	table.insert(buttons, ui.buttonState(function()
+		log("pressed "..i)
+	end))
+end
+
+-- update function is repeated every time tick
+function update()
+	video:Clear(theme.BG) -- Clear the screen
+
+	-- Draw some UI
+	ui.drawToScreen(
+		ui.flex(
+			ui.HORIZONTAL,
+			ui.START,
+			true,
+			ui.rigid(normalText:layout("offsetted")),
+			ui.flexed(1, ui.flex(
+				ui.VERTICAL,
+				ui.START,
+				true,
+				ui.rigid(normalText:layout("offset")),
+				ui.flexed(1, ui.list(
+					theme,
+					listState,
+					#buttons,
+					function(index)
+						return normalButton:layout(buttons[index], "Test "..index)
+					end
+				))
+			))
+		)
+	,
+		video,
+		cpu
+	)
+end
+```
+
 ## Core concepts
 Every widget method of the library uses following types to describe themselves:
 ```luau
@@ -160,10 +225,22 @@ ui.END = 2
 ## Widgets that are included with this library
 ### Containers
 Widgets that define the layout of your screen, all of them layout child widgets in one way or another
+- `ui.background(color: color, child: LayoutFunc): LayoutFunc` - adds a background color around the child
+- `ui.frame(color: color, child: LayoutFunc): LayoutFunc` - draws a frame on the edges of the child
+- `ui.center(child: LayoutFunc): LayoutFunc` - places child into the center of the container, takes as much space as it can!
 - `ui.inset(top: number, bottom: number, left: number, right: number): Inset` - this widget will inset a child widget with provided margins
   - `.top`, `.bottom`, `.left`, `.right` - margin properties  
   - `Inset:layout(child: LayoutFunc): LayoutFunc` - takes in a child widget to inset and returns its layouting function
 - `ui.uniformInset(uni: number): Inset` - same as above, but all sides will have the same provided value
+- `ui.stack(axis: number?, alignment: number?, gap: number?, ...: LayoutFunc): LayoutFunc` - layouts its children one after the other on the provided axis, aligns them with provided alignment, and adds provided gap between each child
+  - default `axis` is horizontal
+  - default `alignment` is start alignment
+  - default `gap` is 0
+- `ui.flex(axis: number?, alignment: number?, expand: boolean?, ...: FlexChild): LayoutFunc` - flexbox, container that lays out children one after the other, but also supports children that expand to cover a ratio of the available space, `expand` should be true if you want expanding children to work
+  - default `axis` is horizontal
+  - default `alignment` is start alignment
+- `ui.rigid(widget: LayoutFunc): FlexChild` - wraps a widget into a type that above mentioned `flex` would understand as fixed size child
+- `ui.flexed(flex: number, widget: LayoutFunc): FlexChild` - wraps a widget into a type that above mentioned `flex` would understand as expanding child
 
 ### Stateful widgets
 Widgets that require a separately provided state to function, you do want to keep your list scroll position, right?
@@ -217,7 +294,21 @@ These widgets usually return a style rather than directly returning a layouting 
 ### Simple widgets
 Widgets that don't have much complexity
 - `ui.empty(): LayoutFunc` - empty widget whenever you want to have nothing
+- `ui.emptyFlex(flex: number): FlexChild` - expanding `flex` version of `empty`
 - `ui.image(data: PixelData): LayoutFunc` - simply renders whatever image you provide
+- `ui.horSeparator(clr: color): LayoutFunc` - horizontal separator, line that will visually separate your items
+- `ui.verSeparator(clr: color): LayoutFunc` - vertical separator, line that will visually separate your items
+- `ui.flexHorSeparator(clr: color): FlexChild` - `flex` version of `horSeparator`
+- `ui.flexVerSeparator(clr: color): FlexChild` - `flex` version of `verSeparator`
+- `ui.wSpacer(space: number): LayoutFunc` - simple spacer widget that will take provided amount of horizontal space in pixels
+- `ui.hSpacer(space: number): LayoutFunc` - simple spacer widget that will take provided amount of vertical space in pixels
+- `ui.flexWSpacer(space: number): FlexChild` - `flex` version of `wSpacer`
+- `ui.flexHSpacer(space: number): FlexChild` - `flex` version of `hSpacer`
 
 ### Helper widgets
 Helpers that will do various things to your layout
+- `ui.contain(child: LayoutFunc): LayoutFunc` - forces the child to adhere to layouting min and max, uses `Buffer` to clip it to fit
+- `ui.limitX(limit: number, child: LayoutFunc): LayoutFunc` - limits how much horizontal space in pixels the child can take
+- `ui.limitY(limit: number, child: LayoutFunc): LayoutFunc` - limits how much vertical space in pixels the child can take
+- `ui.minX(min: number, child: LayoutFunc): LayoutFunc` - forces child to take at least that much horizontal space in pixels
+- `ui.minY(min: number, child: LayoutFunc): LayoutFunc` - forces child to take at least that much vertical space in pixels
