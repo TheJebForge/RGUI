@@ -138,9 +138,38 @@ The library comes with 2 default themes:
 - `ui.blackOnWhite(font: SpriteSheet): Theme` - white background and black text 
 
 ## Widgets that are included with this library
-### Styled widgets
-These widgets usually return a style rather than directly returning a layouting function, you should create them at start of your CPU and keep them around. Styles don't have state, so this is done just for less things you'd constantly have to repeat while creating your UI
+### Containers
+Widgets that define the layout of your screen, all of them layout child widgets in one way or another
 - `ui.inset(top: number, bottom: number, left: number, right: number): Inset` - this widget will inset a child widget with provided margins
+  - `.top`, `.bottom`, `.left`, `.right` - margin properties  
   - `Inset:layout(child: LayoutFunc): LayoutFunc` - takes in a child widget to inset and returns its layouting function
 - `ui.uniformInset(uni: number): Inset` - same as above, but all sides will have the same provided value
+
+### Styled widgets
+These widgets usually return a style rather than directly returning a layouting function, you should create them at start of your CPU and keep them around. Styles don't have state, so this is done just for less things you'd constantly have to repeat while creating your UI
+- `ui.label(theme: Theme): TextStyle` - this widget will render text
+  - `.font: SpriteSheet` - font that will be used for the text
+  - `.fallbackColor: color` - color that will be used when it's not provided in `:layout` function
+  - `:layout(text: string, clr: color?): LayoutFunc` - takes in text to render and optionally color to use, fallbacks to `fallbackColor` if no color is provided
+- `ui.customLabel(font: SpriteSheet, fallback: color): TextStyle` - same as above, but lets you provide custom font and color
+- `ui.sprite(sheet: SpriteSheet, spriteX: number, spriteY: number): SpriteStyle` - this will render a sprite from provided spritesheet
+  - `.sheet: SpriteSheet` - provided spritesheet
+  - `.pos: vec2` - grid position on the spritesheet
+  - `:layout(clr: color): LayoutFunc` - takes in color and renders the sprite with the color being used for tint
+- `ui.progress(theme: Theme): ProgressStyle` - this will render a progress bar
+  - `.height: number` - height of the progress bar, by default it will try to match height of your font
+  - `.minWidth: number` - minimum width of the progress bar in pixels, by default it's `50`
+  - `.color: color` - color of the progress bar
+  - `:layout(expand: boolean, progress: number): LayoutFunc` - renders a progress bar. If `expand` is true, it will take up as much space as it can horizontally. `progress` is a number between 0 and 1
+
+### Stateful widgets
+Widgets that require a separately provided state to function, you do want to keep your list scroll position, right?
+
+
+### Simple widgets
+Widgets that don't have much complexity
 - `ui.empty(): LayoutFunc` - empty widget whenever you want to have nothing
+- `ui.image(data: PixelData): LayoutFunc` - simply renders whatever image you provide
+
+### Helper widgets
+Helpers that will do various things to your layout
